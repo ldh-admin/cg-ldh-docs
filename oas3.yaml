@@ -1,0 +1,1189 @@
+openapi: 3.0.0
+info:
+  version: 1.3.2
+  title: ClinGen Linked Data Hub
+  description: "[**OpenAPI Specification (OAS3)**](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md) for the ***ClinGen Linked Data Hub REST API Design***.\n\n* Contains generic information about the **ClinGen Linked Data Hub** API.\n* Provides information about payload, response codes, modifiers, core fields in the response, etc\n* Responses will be structured JSON-LD, with natural hierarchical organization.\n\n**NOTE**: Response description of several endpoints in this documentation refer to a dynamic property name `entType`. It is one of the currently supported entity types in LDH. \nEntity content will vary depending on the `entType` path parameter used in the lookup. Descriptions of the different entities supported by ClinGen LDH and the schemas for their `entContent` is available in the ***Components*** tab of this documentation.\n\n## Disclaimer\n\n* **BETA RELEASE.** \n\t* This version of the ClinGen LDH service and content is BETA. Additional features are under development. \n\t* Content and representations are subject to change.\n\t* Service and content addresses are subject to change.\n\t* Service and content IRIs are not permalinks and are subject to change.\n\t\n* The OAS3 Spec is intended mainly for documentation and description of the API, interoperability development, general assessment, and illustration.  "
+  contact:
+    name: ERCC Informatics Team at Baylor College of Medicine
+    url: https://ldh.clinicalgenome.org/ldh/ui/
+    email: ldh-admin@bcm.edu
+    x-role: responsible developer
+  license:
+    name: MIT
+    url: https://github.com/ldh-admin/cg-ldh-docs/blob/main/LICENSE
+  termsOfService: https://ldh.clinicalgenome.org/ldh/srvc
+servers:
+  - url: https://genboree.org/ldh
+    description: Development server
+    x-maturity: development
+  - url: https://ldh.clinicalgenome.org/ldh/
+    description: Production server
+    x-maturity: production
+paths:
+  /srvc:
+    get:
+      responses:
+        '200':
+          description: 'Response contains Service Metadata, with information about the number of entity types and the number of links in each entity type. '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      desc:
+                        type: string
+                      disclaimer:
+                        type: string
+                      entCount:
+                        type: integer
+                      entTypes:
+                        type: object
+                        properties:
+                          AlleleFunctionalImpactStatement:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          AlleleMolecularConsequenceStatement:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          BrcaExchangeRecord:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          CivicEvidence:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          ClinVarSubmission:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          CommunityAnnotation:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          Gene:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          InSilicoPredictionScoreStatement:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          InSilicoPredictionScoreStatementEmbedded:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          MaveDBMapping:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          PopulationAlleleFrequencySource:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          PopulationAlleleFrequencyStatement:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          PubMed:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                          Variant:
+                            $ref: '#/components/schemas/entTypeCountsSummary'
+                      iri:
+                        type: string
+                      name:
+                        type: string
+                      version:
+                        type: string
+                  metadata:
+                    $ref: '#/components/schemas/metadata'
+                  status:
+                    $ref: '#/components/schemas/status'
+        '400':
+          $ref: '#/components/schemas/error-response-400'
+      summary: ClinGen LDH Service Metadata
+      description: |-
+        ## LDH **Service** metadata
+
+        * Get basic info about the service such as name, version, descriptions.
+        * Also lists all entity types and counts.
+        * `entTypes` are the types of entity supported by ClinGen LDH.
+      operationId: getLDHSrvc
+      parameters:
+        - $ref: '#/components/parameters/detail'
+      tags:
+        - Service
+  /{entType}:
+    get:
+      responses:
+        '200':
+          description: 'Response contains a single complete document from ClinGen LDH for the searched entity type. '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/entTypeCounts'
+                      - type: object
+                        properties:
+                          entType:
+                            type: string
+                            description: '**Type** of entity supported by ClinGen LDH. '
+                            enum:
+                              - Gene
+                              - Variant
+                              - AlleleFunctionalImpactStatement
+                              - AlleleMolecularConsequenceStatement
+                              - BrcaExchangeRecord
+                              - CivicEvidence
+                              - ClinVarSubmission
+                              - CommunityAnnotation
+                              - InSilicoPredictionScoreStatement
+                              - InSilicoPredictionScoreStatementEmbedded
+                              - MaveDBMapping
+                              - PopulationAlleleFrequencySource
+                              - PopulationAlleleFrequencyStatement
+                          ld:
+                            type: object
+                            description: '* A list of what **linked-data** entity types (`ld`) this entity type can have'
+                            properties:
+                              '{entType}':
+                                allOf:
+                                  - $ref: '#/components/schemas/entTypeCounts'
+                                  - type: object
+                                    properties:
+                                      iri:
+                                        type: string
+                                        format: uri
+                                description: '**Type** of entity supported by LDH. The **key** `{entType}` will be one of the currently supported entity types'
+                          ldFor:
+                            type: object
+                            description: '* A list of what entity types this entity type acts as **linked-data for** (`ldFor`).'
+                            properties:
+                              '{entType}':
+                                allOf:
+                                  - $ref: '#/components/schemas/entTypeCounts'
+                                  - type: object
+                                    properties:
+                                      iri:
+                                        type: string
+                                        format: uri
+                                description: '**Type** of entity supported by LDH. The **key** `{entType}` will be one of the currently supported entity types'
+                  metadata:
+                    $ref: '#/components/schemas/metadata'
+                  status:
+                    $ref: '#/components/schemas/status'
+        '400':
+          $ref: '#/components/schemas/error-response-400'
+      summary: Entity type
+      description: |-
+        ## Entity Type Metadata
+
+        Get basic information about an LDH **entity type** (`entType`).
+        * A given entity type can both **HAVE** linked-data and **ACT AS** linked-data **FOR**. This includes a list of:
+        >* What **linked-data** entity types (`ld`) this entity type *can have*.
+        >* What entity types this entity type *acts as* **linked-data for** (`ldFor`).
+      operationId: getEntType
+      tags:
+        - Entity
+      parameters:
+        - in: path
+          required: true
+          name: entType
+          example: Variant
+          description: |-
+            A valid ***entity type*** in LDH.
+            **Example:** *MaveDBMapping*
+          schema:
+            type: string
+            enum:
+              - Gene
+              - Variant
+              - AlleleFunctionalImpactStatement
+              - AlleleMolecularConsequenceStatement
+              - BrcaExchangeRecord
+              - CivicEvidence
+              - ClinVarSubmission
+              - CommunityAnnotation
+              - InSilicoPredictionScoreStatement
+              - InSilicoPredictionScoreStatementEmbedded
+              - MaveDBMapping
+              - PopulationAlleleFrequencySource
+              - PopulationAlleleFrequencyStatement
+    parameters:
+      - $ref: '#/components/parameters/entType'
+  /id/{val}:
+    get:
+      responses:
+        '200':
+          description: |
+            Response contains a single complete document from LDH with the identifier (`{val}`) that was used in the lookup. 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      '{entType}':
+                        type: array
+                        items:
+                          type: object
+                          $ref: '#/components/schemas/data'
+                  metadata:
+                    $ref: '#/components/schemas/metadata'
+                  status:
+                    $ref: '#/components/schemas/status'
+        '400':
+          $ref: '#/components/schemas/error-response-400'
+        '404':
+          $ref: '#/components/schemas/error-response-404'
+      summary: ID Lookup
+      description: |-
+        ## Non-specific **identity-based** **untyped** lookup
+
+         Get an LDH entity via its "natural" (domain-relevant & ideally external) identifier or using the internal LDH identifier.
+        * The identifier can be one of:
+        >* `entId` - Identifier of the entity in the external data source. **Example**: Gene entId: *COL1A2*
+        >* `ldhId` - LDH identifier. **Example**: For the gene COL1A2 , the LDH Identifier is: *1339464779*
+        >
+      parameters:
+        - name: val
+          in: path
+          schema:
+            type: string
+          example: CA015944
+          required: true
+          description: |-
+            ***val*** can be any identifier or IRI that is accepted in LDH. This includes:
+            * internal LDH `ldhId`
+            * `entId` of an external data source such as ClinVar ID or gnomAD ID or links/IRIs to the resources in the external data source.
+
+            **Examples:** *CA12505803*; *COL1A2*;   
+        - $ref: '#/components/parameters/detail'
+      tags:
+        - Untyped Lookup
+        - Single Document
+        - Specific ID
+      operationId: getDocUsingId
+    parameters:
+      - $ref: '#/components/parameters/val'
+      - $ref: '#/components/parameters/detail'
+  /{entType}/id:
+    get:
+      responses:
+        '200':
+          description: |
+            Response contains a paged list of documents from LDH for the searched entity type. Each page returns 250 documents. 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/data'
+                  metadata:
+                    $ref: '#/components/schemas/metadata'
+                  status:
+                    $ref: '#/components/schemas/status'
+        '400':
+          $ref: '#/components/schemas/error-response-400'
+        '404':
+          $ref: '#/components/schemas/error-response-404'
+      summary: Entity Batch Mode
+      description: |
+        ## Batch **entType** retrieval
+
+        * Get the records of **multiple** LDH entries for an entity type in a single (batch) request.
+
+        * Batch entity retrieval of a paged list of information about an LDH entity type
+        >* Page size 250 items by *default*.
+      tags:
+        - Typed Lookup
+        - Batch Lookup
+      parameters:
+        - in: path
+          required: true
+          name: entType
+          example: Variant
+          description: |-
+            A valid ***entity type*** in LDH.
+            **Example:** *Variant*
+          schema:
+            type: string
+            enum:
+              - Gene
+              - Variant
+              - AlleleFunctionalImpactStatement
+              - AlleleMolecularConsequenceStatement
+              - BrcaExchangeRecord
+              - CivicEvidence
+              - ClinVarSubmission
+              - CommunityAnnotation
+              - InSilicoPredictionScoreStatement
+              - InSilicoPredictionScoreStatementEmbedded
+              - MaveDBMapping
+              - PopulationAlleleFrequencySource
+              - PopulationAlleleFrequencyStatement
+        - $ref: '#/components/parameters/detail'
+        - $ref: '#/components/parameters/pg'
+        - $ref: '#/components/parameters/pgSize'
+        - $ref: '#/components/parameters/fields'
+        - $ref: '#/components/parameters/ids'
+      operationId: getEntTyBatch
+  /{entType}/id/{val}:
+    get:
+      responses:
+        '200':
+          description: 'Response contains a specific document in LDH for the searched identifier within the searched entity type. '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/data'
+                  metadata:
+                    $ref: '#/components/schemas/metadata'
+                  status:
+                    $ref: '#/components/schemas/status'
+        '400':
+          $ref: '#/components/schemas/error-response-400'
+        '404':
+          $ref: '#/components/schemas/error-response-404'
+      description: |
+        ## Specific **identity-based** **typed** lookup
+
+         Get an LDH entity via its "natural" (domain-relevant & ideally external) identifier or using the internal LDH identifier.
+        * The identifiers can be one of:
+        >* `entId` - Identifier of the entity in the external data source. **Example**: Variant identifier: *CA028378*
+        >* `ldhId` - LDH identifier. **Example**: For the variant CA028378, the LDH Identifier is: *114297907*
+      summary: Entity By Specific ID
+      parameters:
+        - in: path
+          required: true
+          name: entType
+          example: Variant
+          description: |-
+            A valid ***entity type*** in LDH.
+            **Example:** *Variant*
+          schema:
+            type: string
+            enum:
+              - Gene
+              - Variant
+              - AlleleFunctionalImpactStatement
+              - AlleleMolecularConsequenceStatement
+              - BrcaExchangeRecord
+              - CivicEvidence
+              - ClinVarSubmission
+              - CommunityAnnotation
+              - InSilicoPredictionScoreStatement
+              - InSilicoPredictionScoreStatementEmbedded
+              - MaveDBMapping
+              - PopulationAlleleFrequencySource
+              - PopulationAlleleFrequencyStatement
+        - name: val
+          in: path
+          schema:
+            type: string
+          example: CA015944
+          required: true
+          description: |-
+            ***val*** can be any identifier or IRI that is accepted in LDH. This includes:
+            * internal LDH `ldhId`
+            * `entId` of an external data source such as ClinVar ID or gnomAD ID or links/IRIs to the resources in the external data source.
+
+            **Examples:** *CA12505803*; *COL1A2*;  
+        - $ref: '#/components/parameters/detail'
+        - $ref: '#/components/parameters/fields'
+      tags:
+        - Typed Lookup
+        - Single Document
+        - Specific ID
+      operationId: getEntTypeById
+  /{entType}/id/{val}/ld:
+    get:
+      responses:
+        '200':
+          description: 'Response contains a specific document with linked data (`ld`) for the searched identifier within the searched entity type. '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/linkedEntityData'
+                  metadata:
+                    $ref: '#/components/schemas/metadata'
+                  status:
+                    $ref: '#/components/schemas/status'
+        '400':
+          $ref: '#/components/schemas/error-response-400'
+        '404':
+          $ref: '#/components/schemas/error-response-404'
+      summary: Entity "Linked Data"
+      description: |-
+        ## Specific **identity-based** **typed** linked-data entity lookup
+
+         Get ***linked-data*** (`ld`) for a specific entity type in LDH.
+        * The identifier of the entity can be its "natural" (domain-relevant & ideally external) identifier or the internal LDH identifier.
+        * The response includes a list of what **linked-data** entity types (`ld`) this entity type can have.
+      operationId: getLdObjForEntTypeBySpecificId
+      parameters:
+        - in: path
+          required: true
+          name: entType
+          example: Variant
+          description: |-
+            A valid ***entity type*** in LDH.
+            **Example:** *Variant*
+          schema:
+            type: string
+            enum:
+              - Gene
+              - Variant
+              - AlleleFunctionalImpactStatement
+              - AlleleMolecularConsequenceStatement
+              - BrcaExchangeRecord
+              - CivicEvidence
+              - ClinVarSubmission
+              - CommunityAnnotation
+              - InSilicoPredictionScoreStatement
+              - InSilicoPredictionScoreStatementEmbedded
+              - MaveDBMapping
+              - PopulationAlleleFrequencySource
+              - PopulationAlleleFrequencyStatement
+        - name: val
+          in: path
+          schema:
+            type: string
+          example: CA015944
+          required: true
+          description: |-
+            ***val*** can be any identifier or IRI that is accepted in LDH. This includes:
+            * internal LDH `ldhId`
+            * `entId` of an external data source such as ClinVar ID or gnomAD ID or links/IRIs to the resources in the external data source.
+
+            **Examples:** *CA12505803*; *COL1A2*;  
+        - $ref: '#/components/parameters/detail'
+        - $ref: '#/components/parameters/fields'
+      tags:
+        - Typed Lookup
+        - Single Document
+        - Linked Data
+        - Specific ID
+  /{entType}/id/{val}/ldFor:
+    get:
+      responses:
+        '200':
+          description: Response contains a specific document with linked data for (`ldFor`) object for the searched identifier within the searched entity type i.e. get entities for which this one is `ldFor`.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/linkedEntityData'
+                  metadata:
+                    $ref: '#/components/schemas/metadata'
+                  status:
+                    $ref: '#/components/schemas/status'
+        '400':
+          $ref: '#/components/schemas/error-response-400'
+        '404':
+          $ref: '#/components/schemas/error-response-404'
+      summary: Entity "Linked Data - For "
+      tags:
+        - Typed Lookup
+        - Single Document
+        - Linked Data
+        - Specific ID
+      operationId: getLdForObjForEntTypeBySpecificId
+      parameters:
+        - in: path
+          required: true
+          name: entType
+          example: Variant
+          description: |-
+            A valid ***entity type*** in LDH.
+            **Example:** *Variant*
+          schema:
+            type: string
+            enum:
+              - Gene
+              - Variant
+              - AlleleFunctionalImpactStatement
+              - AlleleMolecularConsequenceStatement
+              - BrcaExchangeRecord
+              - CivicEvidence
+              - ClinVarSubmission
+              - CommunityAnnotation
+              - InSilicoPredictionScoreStatement
+              - InSilicoPredictionScoreStatementEmbedded
+              - MaveDBMapping
+              - PopulationAlleleFrequencySource
+              - PopulationAlleleFrequencyStatement
+        - name: val
+          in: path
+          schema:
+            type: string
+          example: CA028378
+          required: true
+          description: |-
+            ***val*** can be any identifier or IRI that is accepted in LDH. This includes:
+            * internal LDH `ldhId`
+            * `entId` of an external data source such as ClinVar ID or gnomAD ID or links/IRIs to the resources in the external data source.
+
+            **Examples:** *CA12505803*; *COL1A2*;  
+        - $ref: '#/components/parameters/detail'
+        - $ref: '#/components/parameters/fields'
+      description: |-
+        ## Specific **identity-based** **typed** linked-data-for entity lookup
+
+         Get ***linked-data for*** (`ldFor`, *i.e. the documents this entity is linked data for*) for a specific entity type in LDH.
+        * The identifier of the entity can be its "natural" (domain-relevant & ideally external) identifier or the internal LDH identifier.
+        * The response includes the entity types this entity type acts as **linked-data for** (`ldFor`).
+        * Depending on the `detail` specified in the query, the response may include: 
+        >* a list of all entities this entity acts as **linked-data for** 
+        >* **OR** a count of the `ldFor` docs associated with this entity
+  /{entType}/id/{val}/types:
+    get:
+      responses:
+        '200':
+          description: Response contains a specific document with all entity types and the counts for the searched identifier within the searched entity.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      ld:
+                        $ref: '#/components/schemas/linkedEntityData'
+                      ldFor:
+                        $ref: '#/components/schemas/linkedEntityData'
+                  metadata:
+                    $ref: '#/components/schemas/metadata'
+                  status:
+                    $ref: '#/components/schemas/status'
+        '400':
+          $ref: '#/components/schemas/error-response-400'
+        '404':
+          $ref: '#/components/schemas/error-response-404'
+      description: |-
+        ## Types of Linked-Data for an LDH Entity
+
+         Get the Types of Linked-Data for an LDH Subject Entity. 
+        * The identifier of the entity can be its "natural" (domain-relevant & ideally external) identifier or the internal LDH identifier.
+        * The response does not include any information about the entity itself, but just includes the types of linked-data it has.
+        * By default the more natural/ontologically-relevant entType values are returned. 
+        * Includes list of **entity types** i.e. ***linked-data*** and ***linked-data for*** entity types for a specific entity type in LDH:
+        >* What linked-data entity types (`ld`) this entity type can have.
+        >* What entity types (`ldFor`) this entity type acts as linked-data for.
+      summary: 'Entity "Linked Data - all types" '
+      operationId: getEntTypesForEntity
+      tags:
+        - Typed Lookup
+        - Single Document
+        - Linked Data
+        - Specific ID
+      parameters:
+        - in: path
+          required: true
+          name: entType
+          example: Variant
+          description: |-
+            A valid ***entity type*** in LDH.
+            **Example:** *Variant*
+          schema:
+            type: string
+            enum:
+              - Gene
+              - Variant
+              - AlleleFunctionalImpactStatement
+              - AlleleMolecularConsequenceStatement
+              - BrcaExchangeRecord
+              - CivicEvidence
+              - ClinVarSubmission
+              - CommunityAnnotation
+              - InSilicoPredictionScoreStatement
+              - InSilicoPredictionScoreStatementEmbedded
+              - MaveDBMapping
+              - PopulationAlleleFrequencySource
+              - PopulationAlleleFrequencyStatement
+        - name: val
+          in: path
+          schema:
+            type: string
+          example: CA028378
+          required: true
+          description: |-
+            ***val*** can be any identifier or IRI that is accepted in LDH. This includes:
+            * internal LDH `ldhId`
+            * `entId` of an external data source such as ClinVar ID or gnomAD ID or links/IRIs to the resources in the external data source.
+
+            **Examples:** *CA12505803*; *COL1A2*;   
+        - $ref: '#/components/parameters/detail'
+        - $ref: '#/components/parameters/fields'
+  /{entType}/id/{val}/types/ld:
+    get:
+      responses:
+        '200':
+          description: Response contains a specific document with all entity types within the `ld` object and the counts for the searched identifier within the searched entity.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/linkedEntityData'
+                  metadata:
+                    $ref: '#/components/schemas/metadata'
+                  status:
+                    $ref: '#/components/schemas/status'
+        '400':
+          $ref: '#/components/schemas/error-response-400'
+        '404':
+          $ref: '#/components/schemas/error-response-404'
+      parameters:
+        - in: path
+          required: true
+          name: entType
+          example: Variant
+          description: |-
+            A valid ***entity type*** in LDH.
+            **Example:** *Variant*
+          schema:
+            type: string
+            enum:
+              - Gene
+              - Variant
+              - AlleleFunctionalImpactStatement
+              - AlleleMolecularConsequenceStatement
+              - BrcaExchangeRecord
+              - CivicEvidence
+              - ClinVarSubmission
+              - CommunityAnnotation
+              - InSilicoPredictionScoreStatement
+              - InSilicoPredictionScoreStatementEmbedded
+              - MaveDBMapping
+              - PopulationAlleleFrequencySource
+              - PopulationAlleleFrequencyStatement
+        - name: val
+          in: path
+          schema:
+            type: string
+          example: CA028378
+          required: true
+          description: |-
+            ***val*** can be any identifier or IRI that is accepted in LDH. This includes:
+            * internal LDH `ldhId`
+            * `entId` of an external data source such as ClinVar ID or gnomAD ID or links/IRIs to the resources in the external data source.
+
+            **Examples:** *CA12505803*; *COL1A2*;
+        - $ref: '#/components/parameters/detail'
+        - $ref: '#/components/parameters/fields'
+      summary: Entity linked types - "ld" only
+      description: |-
+        ## Specific **identity-based** **typed** linked-data lookup - `ld` only
+
+        Get the ***linked data*** (`ld`) for a specific entity type in LDH.
+        * The identifier of the entity can be its "natural" (domain-relevant & ideally external) identifier or the internal LDH identifier.
+        * By default the more natural/ontologically-relevant entType values are returned. 
+        * The response does not include any information about the entity itself, but just includes a list of what **linked-data** entity types (`ld`) this entity type can have.
+      operationId: getLdObjWithEntTypesForEntity
+      tags:
+        - Typed Lookup
+        - Single Document
+        - Linked Data
+        - Specific ID
+  /{entType}/id/{val}/types/ldFor:
+    get:
+      responses:
+        '200':
+          description: Response contains a specific document with all entity types within the `ldFor` object and the counts for the searched identifier within the searched entity.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/linkedEntityData'
+                  metadata:
+                    $ref: '#/components/schemas/metadata'
+                  status:
+                    $ref: '#/components/schemas/status'
+        '400':
+          $ref: '#/components/schemas/error-response-400'
+        '404':
+          $ref: '#/components/schemas/error-response-404'
+      summary: Entity linked types - "ldFor" only
+      description: |-
+        ## Specific **identity-based** **typed** linked-data-for lookup - `ldFor` only
+
+        Get the ***linked-data for*** (`ldFor`) for a specific entity type in LDH.
+        * The identifier of the entity can be its "natural" (domain-relevant & ideally external) identifier or the internal LDH identifier.
+        * By default the more natural/ontologically-relevant entType values are returned. 
+        * The response does not include any information about the entity itself, but just includes a list of what entity types this entity type acts as **linked-data for** (`ldFor`).
+      operationId: getLdForObjWithEntTypesForEntity
+      tags:
+        - Typed Lookup
+        - Single Document
+        - Linked Data
+        - Specific ID
+      parameters:
+        - in: path
+          required: true
+          name: entType
+          example: Variant
+          description: |-
+            A valid ***entity type*** in LDH.
+            **Example:** *Variant*
+          schema:
+            type: string
+            enum:
+              - Gene
+              - Variant
+              - AlleleFunctionalImpactStatement
+              - AlleleMolecularConsequenceStatement
+              - BrcaExchangeRecord
+              - CivicEvidence
+              - ClinVarSubmission
+              - CommunityAnnotation
+              - InSilicoPredictionScoreStatement
+              - InSilicoPredictionScoreStatementEmbedded
+              - MaveDBMapping
+              - PopulationAlleleFrequencySource
+              - PopulationAlleleFrequencyStatement
+        - name: val
+          in: path
+          schema:
+            type: string
+          example: CA028378
+          required: true
+          description: |-
+            ***val*** can be any identifier or IRI that is accepted in LDH. This includes:
+            * internal LDH `ldhId`
+            * `entId` of an external data source such as ClinVar ID or gnomAD ID or links/IRIs to the resources in the external data source.
+
+            **Examples:** *CA12505803*; *COL1A2*;  
+        - $ref: '#/components/parameters/detail'
+        - $ref: '#/components/parameters/fields'
+components:
+  parameters:
+    detail:
+      name: detail
+      in: query
+      schema:
+        type: string
+        enum:
+          - high
+          - med
+          - low
+          - noLd
+        default: med
+      description: |-
+        The detail level requested by the query.
+        * ***low*** - Only requests identifier level info for the entity. The `ld` and `ldFor` properties show only the counts for each linked entity type.
+        * ***med*** - (default) - The `ld` and `ldFor` show identifier level info for linked entities.
+        * ***high*** - All details are shown for the entity as well as for `ld` and `ldFor` linked entities.
+        * ***noLd*** - High level of detail for the entity; does not return any info about linked entities.
+    ids:
+      name: ids
+      in: query
+      schema:
+        type: string
+      description: |-
+        Comma separated list of ***identifiers***. This query param allows batch search of a list of identifiers.
+        **Example:** *CA14403822,CA13697882,CA12505803*
+    types:
+      name: types
+      in: query
+      schema:
+        type: string
+        enum:
+          - Gene
+          - Variant
+          - AlleleFunctionalImpactStatement
+          - AlleleMolecularConsequenceStatement
+          - BrcaExchangeRecord
+          - CivicEvidence
+          - ClinVarSubmission
+          - CommunityAnnotation
+          - InSilicoPredictionScoreStatement
+          - InSilicoPredictionScoreStatementEmbedded
+          - MaveDBMapping
+          - PopulationAlleleFrequencySource
+          - PopulationAlleleFrequencyStatement
+      description: |-
+        Comma separated list of ***entity types*** 
+        * Allows filtering the response to show certain entity types only
+
+        **Example:** BrcaExchangeRecord,CivicEvidence
+    fields:
+      name: fields
+      in: query
+      schema:
+        type: string
+      description: |-
+        Comma separated list of ***fields*** to retrieve. 
+
+        **Example:** *entId,ldhId,entContent.source*
+    pg:
+      in: query
+      schema:
+        type: integer
+      description: '***Page Number*** - the page to be retrieved. Default 1'
+      name: pg
+    pgSize:
+      name: pgSize
+      in: query
+      schema:
+        type: integer
+      description: '***Page Size*** - Number of results in each page. Range from 1-250. Default 250'
+    val:
+      name: val
+      in: path
+      schema:
+        type: string
+      example: CA028378
+      required: true
+      description: |-
+        ***val*** can be any identifier or IRI that is accepted in LDH. This includes:
+        * internal LDH `ldhId`
+        * `entId` of an external data source such as ClinVar ID or gnomAD ID or links/IRIs to the resources in the external data source.
+
+        **Examples:** *CA12505803*; *COL1A2*;   
+    entType:
+      in: path
+      required: true
+      name: entType
+      example: Variant
+      description: |-
+        A valid ***entity type*** in LDH.
+        **Example:** *Variant*
+      schema:
+        type: string
+        enum:
+          - Gene
+          - Variant
+          - AlleleFunctionalImpactStatement
+          - AlleleMolecularConsequenceStatement
+          - BrcaExchangeRecord
+          - CivicEvidence
+          - ClinVarSubmission
+          - CommunityAnnotation
+          - InSilicoPredictionScoreStatement
+          - InSilicoPredictionScoreStatementEmbedded
+          - MaveDBMapping
+          - PopulationAlleleFrequencySource
+          - PopulationAlleleFrequencyStatement
+  schemas:
+    error-response-400:
+      description: |-
+        Error response payload with human-readable `errName` code text and a custom `errMsg` message as to the nature of the problem.
+
+        One can operate with just the HTTP response code in the response headers, or can consult this payload for further information.
+
+        The `errCode` number and category `errCat` of the error are also returned.
+      type: object
+      properties:
+        errCat:
+          type: string
+        errCode:
+          type: integer
+        errMsg:
+          type: string
+        errName:
+          type: string
+    error-response-404:
+      description: |-
+        Error response payload with error `code` number, human-readable `name` code text and a custom `msg` message as to the nature of the problem.
+
+        One can operate with just the HTTP response code in the response headers, or can consult this payload for further information.
+
+        Metadata such as the date and time of the error as well as the service causing this error are also returned.
+      type: object
+      properties:
+        metadata:
+          $ref: '#/components/schemas/metadata'
+        status:
+          $ref: '#/components/schemas/status'
+    data:
+      title: Entity Response Data
+      oneOf:
+        - $ref: '#/components/schemas/modifierHighDetail'
+        - $ref: '#/components/schemas/modifierMedDetail'
+        - $ref: '#/components/schemas/modifierNoLdDetail'
+        - $ref: '#/components/schemas/modifierLowDetail'
+      description: |-
+        ***data*** **model** - Fields describing an **entity**, found in the `data` section of the API response.
+
+        * Contains both **entity** level data as well as the **linked data** for any linked entities
+    metadata:
+      type: object
+      title: Response Metadata
+      description: '***metadata*** **model** - Fields typically found in the `metadata` section of the API response.'
+      properties:
+        rendered:
+          type: object
+          description: '**Metadata** about the API response'
+          properties:
+            by:
+              type: string
+              description: The **service** which rendered this API response
+              format: uri
+              example: https://ldh.genome.network/ldh/srvc
+            when:
+              type: string
+              description: The time at which this API response was rendered
+              format: date-time
+          required:
+            - by
+            - when
+    status:
+      type: object
+      title: Response Status
+      description: '***status*** **model** - Fields typically found in the `status` section of the API response.'
+      properties:
+        code:
+          type: integer
+          description: API Response Status Code
+          example: 404
+        name:
+          type: string
+          description: 'Descriptive name of the API response '
+          example: Not Found
+        msg:
+          type: string
+          description: Optional message returned by the API response
+          example: 'Bad Entity - No entities found for identifier '
+      required:
+        - code
+        - name
+    coreData:
+      title: Core Data Model
+      description: '***core data*** **model** - Fields describing an **entity**, found in the `data` section of the API response.'
+      allOf:
+        - $ref: '#/components/schemas/idLevel'
+        - type: object
+          properties:
+            modified:
+              type: string
+              description: '**Login name** of the person who added this entity to LDH'
+              example: sailakss
+            modifier:
+              type: string
+              description: 'Modification **timestamp** value '
+              format: date
+            entContent:
+              type: object
+              title: '| Data - Entity Content'
+              description: |-
+                * **Entity Content** - captures ***excerpts*** (i.e. select data) from the external data source (i.e. the source from which data was obtained). 
+                * Each `entType` has its own `entContent` model and some `entTypes` lack this field.
+                *
+          required:
+            - modifier
+            - modified
+    linkedEntityData:
+      title: Linked Entity Data
+      description: |-
+        ***entity level data*** **model** - fields typically found in `data` section of the API response.
+
+        * Contains all details at the level of an **entity**
+      oneOf:
+        - $ref: '#/components/schemas/entityOnlyLowOrNoLdDetail'
+        - $ref: '#/components/schemas/entityOnlyMedDetail'
+        - $ref: '#/components/schemas/entityOnlyHighDetail'
+    modifierHighDetail:
+      allOf:
+        - $ref: '#/components/schemas/coreData'
+        - type: object
+          description: |-
+            * A list of what **linked-data** entity types (`ld`) this entity type can have
+            * A list of what entity types this entity type acts as **linked-data for** (`ldFor`).
+          properties:
+            ld:
+              $ref: '#/components/schemas/entityOnlyHighDetail'
+            ldFor:
+              $ref: '#/components/schemas/entityOnlyHighDetail'
+      description: |-
+        ***high*** level of *detail*
+
+        * The ***entity*** includes all details i.e. all the core fields including identifiers, IRIs, revision ID, *entContent* and provenance information.
+        * The `ld` and `ldFor` show everything for 1+ such linked entity.
+      title: '| Modifier - Entity Response Level - High detail'
+    modifierMedDetail:
+      description: |-
+        ***med*** level of *detail* - **Default**. 
+
+        * The ***entity*** includes all details i.e. all the core fields including identifiers, IRIs, revision ID, , *entContent* and provenance information.
+        * The `ld` and `ldFor` show identifier level info.
+      title: '| Modifier - Entity Response Level - Med detail'
+      allOf:
+        - $ref: '#/components/schemas/coreData'
+        - type: object
+          properties:
+            ld:
+              $ref: '#/components/schemas/entityOnlyMedDetail'
+            ldFor:
+              $ref: '#/components/schemas/entityOnlyMedDetail'
+    modifierLowDetail:
+      title: '| Modifier - Entity Response Level - Low detail'
+      description: |-
+        ***low*** level of *detail*
+
+        * The ***entity*** includes only identity level core fields i.e. identifiers, IRIs and revision ID and does not contain provenance information.
+        * The `ld` and `ldFor` show just integer **counts** for 1+ such linked entity.
+      allOf:
+        - $ref: '#/components/schemas/idLevel'
+        - type: object
+          properties:
+            ld:
+              $ref: '#/components/schemas/entityOnlyLowOrNoLdDetail'
+            ldFor:
+              $ref: '#/components/schemas/entityOnlyLowOrNoLdDetail'
+    modifierNoLdDetail:
+      allOf:
+        - $ref: '#/components/schemas/coreData'
+        - type: object
+          properties:
+            ld:
+              $ref: '#/components/schemas/entityOnlyLowOrNoLdDetail'
+            ldFor:
+              $ref: '#/components/schemas/entityOnlyLowOrNoLdDetail'
+      description: |-
+        ***noLd*** level of *detail* - i.e do not show any detailed level of **linked data**.
+
+        * The ***entity*** includes all details i.e. all the core fields including identifiers, IRIs, revision ID, *entContent* and provenance information.
+        *  The `ld` and `ldFor` show only the integer **counts** for 1+ such linked entity.
+      title: '| Modifier - Entity Response Level - noLd detail'
+    entityOnlyLowOrNoLdDetail:
+      type: object
+      title: '| Modifier - Linked Entity Data Level - Low/noLd detail'
+      description: |-
+        ***low*** or ***noLd*** level of *detail* at **entity** level
+
+        * Includes only integer counts of an entity
+      properties:
+        '{entType}':
+          type: integer
+          description: |
+            **Type** of entity supported by LDH. The **key** `{entType}` will be one of the currently supported entity types
+    entityOnlyMedDetail:
+      type: object
+      description: |-
+        ***med*** level of *detail* at **entity** level
+
+        * Includes only identity level core fields for each entity i.e. identifiers, IRIs and revision ID.
+        * Does not contain provenance information.
+      title: '| Modifier - Linked Entity Data Level - Med detail'
+      properties:
+        '{entType}':
+          type: array
+          description: |
+            **Type** of entity supported by LDH. The **key** `{entType}` will be one of the currently supported entity types *PopulationAlleleFrequencyStatement*, *MaveDBMapping*
+          items:
+            $ref: '#/components/schemas/idLevel'
+    entityOnlyHighDetail:
+      type: object
+      title: '| Modifier - Linked Entity Data Level - High detail'
+      description: |-
+        ***high*** level of *detail* at **entity** level
+
+        * Includes all fields for each entity.
+      properties:
+        '{entType}':
+          type: array
+          description: |
+            **Type** of entity supported by LDH. The **key** `{entType}` will be one of the currently supported entity types
+          items:
+            $ref: '#/components/schemas/coreData'
+    entTypeCounts:
+      type: object
+      title: '| Data - Entity Type Counts'
+      description: |
+        ***entType counts*** **model** - Entity type counts with averages.
+
+        * `ldPerEnt` - Average linked data an entity of a certain type **HAS**.
+        * `ldForPerEnt` - Average linked data an entity of a certain type **IS**.
+      properties:
+        avg:
+          type: object
+          description: '**Average linked data counts** of an entity of a certain type'
+          properties:
+            ldPerEnt:
+              type: integer
+              description: Average linked data an entity of a certain type **HAS**
+            ldForPerEnt:
+              type: integer
+              description: Average linked data an entity of a certain type **IS**
+        entCount:
+          type: integer
+          description: '**Entity count** - the number of items of a certain entity type stored in LDH'
+    idLevel:
+      type: object
+      title: '| Data - Entity Identifiers'
+      description: |-
+        ***id level fields*** **model** 
+
+        * Includes only *identifier level* fields. 
+      properties:
+        entId:
+          type: string
+          description: '**Identifier** of the entity in the external data source.'
+          example: CA12505803
+        entIri:
+          type: string
+          description: '**IRI** of the entity in the external data source'
+          format: uri
+        entType:
+          type: string
+          description: '**Type** of entity supported by LDH.'
+          example: Variant
+          enum:
+            - Gene
+            - Variant
+            - AlleleFunctionalImpactStatement
+            - AlleleMolecularConsequenceStatement
+            - BrcaExchangeRecord
+            - CivicEvidence
+            - ClinVarSubmission
+            - CommunityAnnotation
+            - InSilicoPredictionScoreStatement
+            - InSilicoPredictionScoreStatementEmbedded
+            - MaveDBMapping
+            - PopulationAlleleFrequencySource
+            - PopulationAlleleFrequencyStatement
+        ldhId:
+          type: string
+          description: Internal LDH **identifier**
+          example: '41889804'
+        ldhIri:
+          type: string
+          description: Internal LDH **IRI**
+          format: uri
+        rev:
+          type: string
+          description: '**Revision** ID'
+          example: _Z2qyw7S--_
+      required:
+        - entType
+        - ldhId
+        - ldhIri
+        - rev
+    entTypeCountsSummary:
+      description: Summary of entity type counts
+      title: '| Data - Entity Type Counts Summary'
+      allOf:
+        - $ref: '#/components/schemas/entTypeCounts'
+        - type: object
+          properties:
+            iri:
+              type: string
+tags:
+  - name: Service
+    description: Service Metadata which contains a list of all entity types and number of documents in each entity type collection
+  - name: Entity
+    description: Entity specific info, including entity and linked data document counts for the entity collection
+  - name: Untyped Lookup
+    description: Untyped entity lookup using id val
+  - name: Typed Lookup
+    description: Lookup based on entity types
+  - name: Linked Data
+    description: Response returns the requested "Linked Data" for the provided entity id val
+  - name: Single Document
+    description: Response has a single document
+  - name: Batch Lookup
+    description: 'Batch lookup of entities. Response includes a paged list of items from the searched entity type. Default page size: 250'
+  - name: Specific ID
+    description: Lookup by identifier
