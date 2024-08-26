@@ -5,7 +5,7 @@
     "title": "ClinGen Linked Data Hub",
     "description": "[**OpenAPI Specification (OAS3)**](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md) for the ***ClinGen Linked Data Hub REST API Design***.\n\n* Contains generic information about the **ClinGen Linked Data Hub** API.\n* Provides information about payload, response codes, modifiers, core fields in the response, etc\n* Responses will be structured JSON-LD, with natural hierarchical organization.\n\n**NOTE**: Response description of several endpoints in this documentation refer to a dynamic property name `entType`. It is one of the currently supported entity types in LDH. \nEntity content will vary depending on the `entType` path parameter used in the lookup. Descriptions of the different entities supported by ClinGen LDH and the schemas for their `entContent` is available in the ***Components*** tab of this documentation.\n\n## Disclaimer\n\n* **BETA RELEASE.** \n\t* This version of the ClinGen LDH service and content is BETA. Additional features are under development. \n\t* Content and representations are subject to change.\n\t* Service and content addresses are subject to change.\n\t* Service and content IRIs are not permalinks and are subject to change.\n\t\n* The OAS3 Spec is intended mainly for documentation and description of the API, interoperability development, general assessment, and illustration.  ",
     "contact": {
-      "name": "ERCC Informatics Team at Baylor College of Medicine",
+      "name": "The Bioinformatics Research Laboratory's Linked Data Hub Team at Baylor College of Medicine",
       "url": "https://ldh.clinicalgenome.org/ldh/ui/",
       "email": "ldh-admin@bcm.edu",
       "x-role": "responsible developer"
